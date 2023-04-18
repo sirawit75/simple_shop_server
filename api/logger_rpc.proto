@@ -1,0 +1,12 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+package pb;
+option go_package = "./pb";
+
+
+message LoginTimestamp{
+   string  username = 1;
+    google.protobuf.Timestamp  login_timestamp=  2;
+}
+
+

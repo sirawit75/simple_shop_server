@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.logger.name}}
+  namespace: {{ .Values.logger.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.logger.name}}
+  replicas: {{ .Values.logger.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.logger.name}}
+    spec:
+      containers:
+        - name: {{ .Values.logger.name}}
+          image: {{ .Values.logger.image }}:{{ .Values.logger.tag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.logger.port }}
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/logger
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.logger.port }}
+            initialDelaySeconds: {{ .Values.logger.initialDelaySeconds }}
+            periodSeconds: {{ .Values.logger.periodSeconds }}
+          {{- if .Values.logger.env }}
+          env:
+          {{- range $key, $value := .Values.logger.env }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+          # resources:
+          #   limits:
+          #     cpu: "2"
+          #     memory: "2Gi"
+          #   requests:
+          #     cpu: "0.2"
+          #     memory: "250Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.logger.name}}
+  namespace: {{ .Values.logger.namespace }}
+spec:
+  selector:
+    app: {{ .Values.logger.name}}
+  ports:
+    - port: {{ .Values.logger.port }}
+      # targetPort: 8082
+  # type: LoadBalancer

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # name: product-deployment
+  # namespace: shop
+  name: {{ .Values.product.name}}
+  namespace: {{ .Values.product.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.product.name}}
+  # replicas: 1
+  replicas: {{ .Values.product.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.product.name}}
+    spec:
+      containers:
+        - name: {{ .Values.product.name}}
+          # image: server-product-service:latest
+          image: {{ .Values.product.image }}:{{ .Values.product.tag }}
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              # path: /product/healthz
+              # port: 8082
+              path: {{ .Values.product.healthCheckPath }}
+              port: {{ .Values.product.targetPort }}
+              scheme: HTTP
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/product
+          {{- if .Values.product.env }}
+          env:
+          {{- range $key, $value := .Values.product.env }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.product.name}}
+  namespace: {{.Values.product.namespace}}
+spec:
+  selector:
+    app: {{ .Values.product.name}}
+  ports:
+    - name: {{ .Values.product.portName }}
+      protocol: TCP
+      port: {{ .Values.product.port}}
+      targetPort: {{ .Values.product.targetPort}}
+  # type: LoadBalancer
