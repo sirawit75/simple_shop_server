@@ -1,0 +1,17 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+import "logger_rpc.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+
+
+service LoggerService{
+    rpc SendLoginTimestampToLogger(LoginTimestamp)returns (LoginTimestamp){ } ;
+    rpc CheckRediness(google.protobuf.Empty)returns  (google.protobuf.Empty){
+        option (google.api.http)={
+             get: "/logger/readiness"
+        };
+    };
+}

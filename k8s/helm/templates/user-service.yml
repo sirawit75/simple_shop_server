@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # name: user-deployment
+  # namespace: shop
+  name: {{ .Values.user.name}}
+  namespace: {{ .Values.user.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.user.name}}
+  # replicas: 1
+  replicas: {{ .Values.user.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.user.name}}
+    spec:
+      containers:
+        - name: {{ .Values.user.name}}
+          # image: server-user-service:latest
+          image: {{ .Values.user.image }}:{{ .Values.user.tag }}
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              # path: /user/healthz
+              # port: 8080
+              path: {{ .Values.user.healthCheckPath }}
+              port: {{ .Values.user.targetPort }}
+              scheme: HTTP
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/user
+          {{- if .Values.user.env }}
+          env:
+          {{- range $key, $value := .Values.user.env }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+          # resources:
+          #   limits:
+          #     cpu: "2"
+          #     memory: "1Gi"
+          #   requests:
+          #     cpu: "0.2"
+          #     memory: "150Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.user.name}}
+  namespace: {{ .Values.user.namespace }}
+spec:
+  selector:
+    app: {{ .Values.user.name}}
+  ports:
+    # - name: user-http
+    - name: {{ .Values.user.portName }}
+      protocol: TCP
+      # port: 80
+      # targetPort: 8080
+      port: {{ .Values.user.port}}
+      targetPort: {{ .Values.user.targetPort}}
+  # type: LoadBalancer

@@ -1,0 +1,18 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "product.proto";
+package pb;
+option go_package = "./pb";
+
+message Cart{
+    uint64 ID = 1;
+    Product product = 2;
+    uint64 product_id = 3;
+    int64 qty  = 4;
+    google.protobuf.Timestamp created_at =  5;
+}
+
+
+message Carts{
+    repeated Cart carts = 1;
+}

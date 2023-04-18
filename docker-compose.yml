@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  user-service:
+    build:
+      dockerfile: ./dockerfiles/user.dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-db
+    environment:
+      DSN: "host=user-db user=postgres password=password dbname=user port=5432 sslmode=disable"
+      GRPC_LOGGER_SERVER_ADDRESS: logger-service:8081
+      REDIS_ADDR: worker-redis:6379
+    restart: always
+
+  user-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user
+    ports:
+      - "5432:5432"
+      # volumes:
+      # - db-data:/var/lib/postgresql/data/
+
+  product-service:
+    build:
+      dockerfile: ./dockerfiles/product.dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      - product-db
+    environment:
+      DSN: "host=product-db user=postgres password=password dbname=product port=5432 sslmode=disable"
+    restart: always
+
+  product-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=product
+    ports:
+      - "5433:5432"
+      # volumes:
+      # - db-data:/var/lib/postgresql/data/
+
+
+  worker-service:
+    build:
+      dockerfile: ./dockerfiles/worker.dockerfile
+    depends_on:
+      - worker-redis
+      # - logger-db
+    environment:
+      DSN: mongodb://logger-db:27017
+      REDIS_ADDR: worker-redis:6379
+      # GRPC_WORKER_SERVER_ADDRESS: worker-service:8083
+    restart: always
+
+  logger-service:
+    build:
+      dockerfile: ./dockerfiles/logger.dockerfile
+    depends_on:
+      # - worker-redis
+      - logger-db
+    environment:
+      DSN: mongodb://logger-db:27017
+      # REDIS_ADDR: worker-redis:6379
+      GRPC_LOGGER_SERVER_ADDRESS: logger-service:8081
+    restart: always
+
+  logger-db:
+    image: mongo:6.0-jammy
+    ports:
+      - "27017:27017"
+    # volumes:
+    # - db-data:/var/lib/postgresql/data/
+
+  worker-redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

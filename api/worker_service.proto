@@ -1,0 +1,18 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+import "worker_rpc.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+
+
+service WorkerService{
+    rpc InsertLoginTimestamp(LoginTimestampReq)returns (google.protobuf.Empty){ } ;
+    rpc SendWelcomeEmail(SendWelcomeEmailReq)returns (google.protobuf.Empty){ } ;
+    rpc CheckRediness(google.protobuf.Empty)returns  (google.protobuf.Empty){
+        option (google.api.http)={
+             get: "/worker/readiness"
+        };
+    };
+}

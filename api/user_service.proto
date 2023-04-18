@@ -1,0 +1,27 @@
+syntax = "proto3";
+import "user_register_rpc.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+package pb;
+option go_package = "./pb";
+
+
+service UserService{
+    rpc Register(RegisterReq)returns (RegisterRes){
+         option (google.api.http) = {
+            post: "/user/register"
+            body: "*"
+        };
+    };
+    rpc Login(LoginReq)returns (LoginRes){
+         option (google.api.http) = {
+            post: "/user/login"
+            body: "*"
+        };
+    };
+    rpc TestApi(google.protobuf.Empty)returns (TestApiRes){
+         option (google.api.http) = {
+            get: "/user/test/1"
+        };
+    };
+}
