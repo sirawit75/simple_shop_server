@@ -1,0 +1,47 @@
+syntax = "proto3";
+import "product_rpc.proto";
+import "product.proto";
+import "cart.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+package pb;
+option go_package = "./pb";
+
+
+service ProductService{
+    rpc GetProducts(GetProductsReq)returns (GetProductsRes){
+         option (google.api.http) = {
+            get: "/product"
+        };
+    };
+    
+    rpc GetCarts(google.protobuf.Empty)returns (Carts){
+         option (google.api.http) = {
+            get: "/product/getcarts"
+        };
+    };
+    rpc GetProduct(GetProductsReq) returns (Product){
+         option (google.api.http) = {
+            get: "/product/item/{id}"
+        };
+    };
+    rpc CreateProduct(Product)returns (Product){
+         option (google.api.http) = {
+            post: "/product/create"
+            body: "*"
+        };
+    };
+
+    rpc ManageCart(Cart)returns (Cart){
+         option (google.api.http) = {
+            put: "/product/managecart"
+            body: "*"
+        };
+    };
+
+    rpc DeleteCart(DeleteCartReq)returns (google.protobuf.Empty){
+         option (google.api.http) = {
+            delete: "/product/deletecart/{id}"
+        };
+    };
+}

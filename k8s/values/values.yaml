@@ -1,0 +1,68 @@
+worker:
+  name: worker-service
+  namespace: shop
+  replicas: 1
+  image: 407827606091.dkr.ecr.ap-southeast-1.amazonaws.com/worker
+  tag: latest
+  healthCheckPath: /worker/healthz
+  port: 8083
+  env:
+    WORKER_HEALTHZ: :8083
+    REDIS_ADDR: redis-service:6379
+    EMAIL_SENDER_PASSWORD: ""
+
+user:
+  name: user-service
+  portName: user-http
+  namespace: shop
+  replicas: 1
+  image: 407827606091.dkr.ecr.ap-southeast-1.amazonaws.com/user
+  tag: latest
+  healthCheckPath: /user/healthz
+  targetPort: 8080
+  port: 80
+  env:
+    DSN: host=userdb-service user=postgres password=password dbname=user port=5432 sslmode=disable
+    GRPC_LOGGER_SERVER_ADDRESS: logger-service:8081
+    REDIS_ADDR: redis-service:6379
+    SIGN: 4XYabOntFwkPzrAJg5ZVgyXXrjwK7ykM
+
+product:
+  name: product-service
+  portName: product-http
+  namespace: shop
+  replicas: 1
+  image: 407827606091.dkr.ecr.ap-southeast-1.amazonaws.com/product
+  tag: latest
+  healthCheckPath: /product/healthz
+  targetPort: 8082
+  port: 80
+  env:
+    DSN: host=productdb-service user=postgres password=password dbname=product port=5432 sslmode=disable
+    ADMIN: sirawit75
+
+ingress:
+  name: shop-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+  host: api.sirawit-shop.link
+  path:
+    user: /user
+    product: /product
+
+logger:
+  name: logger-service
+  namespace: shop
+  replicas: 1
+  image: 407827606091.dkr.ecr.ap-southeast-1.amazonaws.com/logger
+  tag: latest
+  port: 8081
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  env:
+    DSN: mongodb://loggerdb-service:27017
+    REDIS_ADDR: redis-service:6379
+    GRPC_LOGGER_SERVER_ADDRESS: :8081

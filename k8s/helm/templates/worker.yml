@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.worker.name}}
+  namespace: {{ .Values.worker.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.worker.name }}
+  replicas: {{ .Values.worker.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.worker.name}}
+    spec:
+      containers:
+        - name: {{ .Values.worker.name }}
+          image: {{ .Values.worker.image }}:{{ .Values.worker.tag }}
+          imagePullPolicy: Always
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/worker
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.worker.healthCheckPath }}
+              port: {{ .Values.worker.port }}
+              scheme: HTTP
+          {{- if .Values.worker.env }}
+          env:
+          {{- range $key, $value := .Values.worker.env }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+          # resources:
+          #   limits:
+          #     cpu: "2"
+          #     memory: "2Gi"
+          #   requests:
+          #     cpu: "0.2"
+          #     memory: "250Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.worker.name}}
+  namespace: {{ .Values.worker.namespace}}
+spec:
+  selector:
+    app: {{ .Values.worker.name}}
+  ports:
+    - port: {{ .Values.worker.port }}

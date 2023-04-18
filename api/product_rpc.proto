@@ -1,0 +1,22 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+import "product.proto";
+
+
+message GetProductsRes{
+    repeated Product products = 1;
+    bool has_more = 2;
+}
+
+message GetProductsReq{
+    uint64 id = 1;
+}
+
+message DeleteCartReq{
+    uint64 id = 1;
+}
+
+
+
+

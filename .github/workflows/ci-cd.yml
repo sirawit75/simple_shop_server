@@ -1,0 +1,119 @@
+name: SHOP
+
+on:
+  pull_request:
+    branches: ["main", "prod"]
+  push:
+    branches: ["prod"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      userdb:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: user
+          POSTGRES_USER: root
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      productdb:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: product
+          POSTGRES_USER: root
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - name: Test
+        run: make test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/prod'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build user-service image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: user
+          IMAGE_TAG: ${{ github.sha }}
+          DOCKER_PATH: ./dockerfiles/user.dockerfile
+        run: |
+          docker build \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            -t $REGISTRY/$REPOSITORY:latest \
+            -f $DOCKER_PATH .
+          docker push -a $REGISTRY/$REPOSITORY
+      - name: Build product-service image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: product
+          IMAGE_TAG: ${{ github.sha }}
+          DOCKER_PATH: ./dockerfiles/product.dockerfile
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG  -t  $REGISTRY/$REPOSITORY:latest -f $DOCKER_PATH .
+          docker push -a $REGISTRY/$REPOSITORY
+      - name: Build logger-service image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: logger
+          IMAGE_TAG: ${{ github.sha }}
+          DOCKER_PATH: ./dockerfiles/logger.dockerfile
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG  -t  $REGISTRY/$REPOSITORY:latest -f $DOCKER_PATH .
+          docker push -a $REGISTRY/$REPOSITORY
+      - name: Build worker-service image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: worker
+          IMAGE_TAG: ${{ github.sha }}
+          DOCKER_PATH: ./dockerfiles/worker.dockerfile
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t  $REGISTRY/$REPOSITORY:latest -f $DOCKER_PATH .
+          docker push -a $REGISTRY/$REPOSITORY
+
+      - name: Update kube config
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+      - name: Deploy to EKS
+        run: |
+          helm upgrade --install ${{ secrets.EKS_CLUSTER_NAME }} \
+            --set user.env.DSN=${{secrets.USER_DSN}} \
+            --set product.env.DSN=${{secrets.PRODUCT_DSN }} \
+            --set worker.env.EMAIL_SENDER_PASSWORD=${{secrets.EMAIL_SENDER_PASSWORD }} \
+            --set product.env.ADMIN=${{secrets.ADMIN }} \
+            --set user.env.SIGN=${{secrets.SIGN}} \
+            --set logger.env.DSN=${{secrets.MONGO }} \
+            -f k8s/values/values.yaml \
+            ./k8s/helm/
