@@ -113,7 +113,8 @@ jobs:
             --set product.env.DSN=${{secrets.PRODUCT_DSN }} \
             --set worker.env.EMAIL_SENDER_PASSWORD=${{secrets.EMAIL_SENDER_PASSWORD }} \
             --set product.env.ADMIN=${{secrets.ADMIN }} \
-            --set user.env.SIGN=${{secrets.SIGN}} \
+            --set user.env.SIGN=${{secrets.SIGN }} \
+            --set product.env.SIGN=${{secrets.SIGN }} \
             --set logger.env.DSN=${{secrets.MONGO }} \
             -f k8s/values/values.yaml \
             ./k8s/helm/
