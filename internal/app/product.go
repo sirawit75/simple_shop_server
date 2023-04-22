@@ -5,7 +5,6 @@ import (
 	"sirawit/shop/internal/model"
 	"sirawit/shop/pkg/pb"
 
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -79,8 +78,6 @@ func (p *productServer) GetProducts(ctx context.Context, req *pb.GetProductsReq)
 
 func (p *productServer) CreateProduct(ctx context.Context, req *pb.Product) (*pb.Product, error) {
 	username, err := p.getUsernameFromToken(ctx)
-	log.Debug().Msgf("username = %v\n", username)
-	log.Debug().Msgf("admin = %v\n", p.config.Admin)
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "user isn't authorized")
 	}
