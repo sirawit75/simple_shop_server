@@ -68,6 +68,7 @@ func (u *userServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.Reg
 	return convertUserToUserRes(result), nil
 }
 
+
 func (u *userServer) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error) {
 	result, err := u.userService.Login(req.GetUsername(), req.GetPassword())
 	if err != nil {
