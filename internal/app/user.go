@@ -73,5 +73,15 @@ func (u *userServer) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes,
 	if err != nil {
 		return nil, err
 	}
+
+	_, err = u.loggerClient.SendLoginTimestampToLogger(ctx, &pb.LoginTimestamp{
+		Username: result.User.Username,
+	})
+	if err != nil {
+		log.Err(err).Msg("Send to logger service failed")
+	} else {
+		log.Info().Msg("Send to logger service success")
+	}
+
 	return (*pb.LoginRes)(convertUserToUserRes(result)), nil
 }
