@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	limit = 5
+	limit = 6
 )
 
 func (p *productQuery) GetCarts(username string) ([]model.Cart, error) {
