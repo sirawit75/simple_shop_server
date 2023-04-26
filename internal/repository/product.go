@@ -55,7 +55,7 @@ func (p *productQuery) ManageCart(input model.Cart) (*model.Cart, error) {
 
 func (p *productQuery) GetProducts(id uint64) (*GetProductsRes, error) {
 	var products []model.Product
-	if err := p.db.Where("id > ?", id).Limit(limit + 1).Find(&products).Error; err != nil {
+	if err := p.db.Order("id asc").Where("id > ?", id).Limit(limit + 1).Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return &GetProductsRes{
