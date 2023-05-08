@@ -2,7 +2,7 @@ worker:
   name: worker-service
   namespace: shop
   replicas: 1
-  image: 146526681295.dkr.ecr.us-east-1.amazonaws.com/worker
+  image: 146526681295.dkr.ecr.ap-southeast-1.amazonaws.com/worker
   tag: latest
   healthCheckPath: /worker/healthz
   port: 8083
@@ -16,7 +16,7 @@ user:
   portName: user-http
   namespace: shop
   replicas: 1
-  image: 146526681295.dkr.ecr.us-east-1.amazonaws.com/user
+  image: 146526681295.dkr.ecr.ap-southeast-1.amazonaws.com/user
   tag: latest
   healthCheckPath: /user/healthz
   targetPort: 8080
@@ -32,7 +32,7 @@ product:
   portName: product-http
   namespace: shop
   replicas: 1
-  image: 146526681295.dkr.ecr.us-east-1.amazonaws.com/product
+  image: 146526681295.dkr.ecr.ap-southeast-1.amazonaws.com/product
   tag: latest
   healthCheckPath: /product/healthz
   targetPort: 8082
@@ -58,7 +58,7 @@ logger:
   name: logger-service
   namespace: shop
   replicas: 1
-  image: 146526681295.dkr.ecr.us-east-1.amazonaws.com/logger
+  image: 146526681295.dkr.ecr.ap-southeast-1.amazonaws.com/logger
   tag: latest
   port: 8081
   initialDelaySeconds: 5
